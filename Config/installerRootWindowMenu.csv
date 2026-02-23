@@ -1,0 +1,15 @@
+hotKey,displayName,messageForClick
+,"Install FROG","[ 'frog-installer-runInstaller.sh' ]|runCommandInBackground"
+,
+"F1",XTerm,"[ 'frog-xterm.sh' ] | runCommandInBackground"
+,,
+"F2",Home,"NSArray|addObject:'frog'|addObject:'open'|addObject:(homeDir)|runCommandInBackground"
+,,
+"F9","Toggle Expose Mode","toggleExposeMode"
+,,
+,"Restart","[ 'frog-performRestart.pl' ]|runCommandInBackground"
+,"Shutdown","[ 'frog-performShutdown.pl' ]|runCommandInBackground"
+,,
+,"Frogger","[ 'frog' 'Frogger' ]|runCommandInBackground"
+,"Help","NSArray|addObject:'frog'|addObject:'open'|addObject:(frogDir:'Help')|runCommandInBackground"
+,"About...","['frog' 'about']|runCommandInBackground"

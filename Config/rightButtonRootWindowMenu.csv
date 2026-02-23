@@ -1,0 +1,19 @@
+hotKey,displayName,messageForClick
+"F1",XTerm,"[ 'frog-xterm.sh' ] | runCommandInBackground"
+,Chromium,"[ 'chromium' ] | runCommandInBackground"
+,,
+"F2",Home,"NSArray|addObject:'frog'|addObject:'open'|addObject:(homeDir)|runCommandInBackground"
+,,
+"F9","Toggle Expose Mode","toggleExposeMode"
+,,
+,"Take Screenshot of Root Window","['frog-x11-takeScreenshotRootWindow.pl']|runCommandInBackground"
+,"Take Screenshot of Focus Window","NSArray|addObject:'frog-x11-takeScreenshotForWindow:.pl'|addObject:(currentWindow|window)|runCommandInBackground"
+,"Take Screenshot with Selection Box","NSArray|addObject:'frog-x11-takeScreenshotSelectionBox.pl'|runCommandInBackground"
+,"Take Screenshot of Focus Window Content","NSArray|addObject:'frog-x11-takeScreenshotForContentOfWindow:.pl'|addObject:(currentWindow|window)|runCommandInBackground"
+,,
+,"Restart","[ 'frog-performRestart.pl' ]|runCommandInBackground"
+,"Shutdown","[ 'frog-performShutdown.pl' ]|runCommandInBackground"
+,,
+,"Help","NSArray|addObject:'frog'|addObject:'open'|addObject:(frogDir:'Help')|runCommandInBackground"
+,,
+,"About...","['frog' 'about']|runCommandInBackground"

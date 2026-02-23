@@ -1,0 +1,2 @@
+flexible,leftPadding,rightPadding,objectMessage,messageForClick
+,4,4,"TextMenuItem:'Example1'","frogDir:'Config/rootWindowMenu.csv'|parseCSVFile|asX11Menu"

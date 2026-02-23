@@ -1,0 +1,9 @@
+stringFormat,messageForClick
+"#{frogDir:'Prefs/timezone.txt'|stringFromFile|chomp}",
+,
+"Select Time Zone...","['frog' 'Timezones']|runCommandInBackground"
+,
+"Open Calendar Panel...","['frog' 'show' 'CalendarSingleColumnNoEvents']|runCommandInBackground"
+"Open Calendar Year Panel...","['frog' 'show' 'CalendarNoEvents']|runCommandInBackground"
+,
+Stopwatch,"['frog' 'Stopwatch']|runCommandInBackground"

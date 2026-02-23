@@ -1,0 +1,13 @@
+disable,flexible,leftPadding,rightPadding,objectMessage,messageForClick
+,,4,4,"FrogMenuItem","frogDir:'Config/rootWindowMenu.csv'|parseCSVFile|asX11Menu"
+,1,0,0,"TextMenuItem:''",
+,,4,4,"TextMenuItem:'ps'","['frog-commandOutputMenu.pl' 'ps' 'auxk' '-pcpu']|runCommandAndReturnOutput|asString|parseGeneratedMenuFromString|asX11Menu|useFixedWidthFont"
+,,4,4,"TextMenuItem:'lsblk'","['frog-commandOutputMenu.pl' 'lsblk' '-i' '-o' 'NAME,FSTYPE,FSVER,LABEL,FSAVAIL,FSUSE%,MOUNTPOINTS']|runCommandAndReturnOutput|asString|parseGeneratedMenuFromString|asX11Menu|useFixedWidthFont"
+,,4,4,"TextMenuItem:'Window'","frogDir:'Config/windowMenu.csv'|parseCSVFile|asX11Menu"
+1,,4,4,"TextMenuItem:'Camera'","['frog-generateVideoCamerasMenu.pl']|runCommandAndReturnOutput|asString|parseGeneratedMenuFromString|asX11Menu"
+,,4,4,"CommandTextMenuItem:['frog-x11-monitor-monitorEvents'] lineMessage:[x11SetupMonitors] stringFormat:'Mon #{x11CurrentMonitorIndexName}'","NSArray|addObject:'frog-x11-monitor-generateMenuForMonitor:path:.pl'|addObject:(x11CurrentMonitorName)|addObject:(frogDir:'Temp/x11ListMonitors-output.txt')|runCommandAndReturnOutput|asString|parseGeneratedMenuFromString|asX11Menu"
+,,4,4,"TextMenuItem:'Audio'","['frog-alsa-generateMenu.pl']|runCommandAndReturnOutput|asString|parseGeneratedMenuFromString|asX11Menu"
+,,4,4,"CommandTextMenuItem:['frog-alsa-printStatus'] stringFormat:'Volume: #{ifTrue:[playbackSwitch] then:[PercentString:(volume|times:100|intValue)] else:[MuteString]}'","VolumeMenu"
+,,4,4,"CommandTextMenuItem:['frog-printBatteryStatus.pl' ]",
+,,4,4,"CommandBitmapMenuItem:['frog-printCPUStats.pl' ]",
+,,4,4,"CommandTextMenuItem:['frog-printDateEverySecond.pl']","frogDir:'Config/dateTimeMenu.csv'|parseCSVFile|asX11Menu"
