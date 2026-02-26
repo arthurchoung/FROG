@@ -859,7 +859,7 @@ NSLog(@"reparentWindow:%lu name %@", win, name);
     int rightBorder = [obj intValueForKey:@"rightBorder"];
     int topBorder = [obj intValueForKey:@"topBorder"];
     int bottomBorder = [obj intValueForKey:@"bottomBorder"];
-    id dict = [self openWindowForObject:obj  x:x y:y w:w+leftBorder+rightBorder h:h+topBorder+bottomBorder];
+    id dict = [self openWindowForObject:obj  x:x-leftBorder y:y-topBorder w:w+leftBorder+rightBorder h:h+topBorder+bottomBorder];
      unsigned long objectWindow = [dict unsignedLongValueForKey:@"window"];
     XAddToSaveSet(_display, win);
     XSetWindowBorderWidth(_display, win, 0);
@@ -1122,6 +1122,85 @@ NSLog(@"unparent object %@", dict);
     [dict setValue:nsfmt(@"%d", y) forKey:@"y"];
     [dict setValue:nsfmt(@"%d", w) forKey:@"w"];
     [dict setValue:nsfmt(@"%d", h) forKey:@"h"];
+    [self XMoveResizeWindow:win :x :y :w :h];
+    id childWindowNumber = [dict valueForKey:@"childWindow"];
+    if (childWindowNumber) {
+        unsigned long childWindow = [childWindowNumber unsignedLongValue];
+        id object = [dict valueForKey:@"object"];
+        int leftBorder = [object intValueForKey:@"leftBorder"];
+        int rightBorder = [object intValueForKey:@"rightBorder"];
+        int topBorder = [object intValueForKey:@"topBorder"];
+        int bottomBorder = [object intValueForKey:@"bottomBorder"];
+        int childW = [dict intValueForKey:@"w"]-leftBorder-rightBorder;
+        int childH = [dict intValueForKey:@"h"]-topBorder-bottomBorder;
+        if (childW < 1) {
+        } else if (childH < 1) {
+        } else {
+            [self XMoveResizeWindow:childWindow :leftBorder :topBorder :childW :childH];
+        }
+    }
+    [self addShadowMaskToObjectWindow:dict];
+    [dict setValue:@"1" forKey:@"needsRedraw"];
+}
+- (void)moveResizeObjectWindow:(id)dict x:(int)x y:(int)y w:(int)w h:(int)h value_mask:(unsigned long)value_mask
+{
+    if ([dict intValueForKey:@"FROGNOFRAME"]) {
+        id window = [dict valueForKey:@"childWindow"];
+        if (window) {
+            Window win = [window unsignedLongValue];
+            if (value_mask & CWX) {
+                [dict setValue:nsfmt(@"%d", x) forKey:@"x"];
+            } else {
+                x = [dict intValueForKey:@"x"];
+            }
+            if (value_mask & CWY) {
+                [dict setValue:nsfmt(@"%d", y) forKey:@"y"];
+            } else {
+                y = [dict intValueForKey:@"y"];
+            }
+            if (value_mask & CWWidth) {
+                [dict setValue:nsfmt(@"%d", w) forKey:@"w"];
+            } else {
+                w = [dict intValueForKey:@"w"];
+            }
+            if (value_mask & CWHeight) {
+                [dict setValue:nsfmt(@"%d", h) forKey:@"h"];
+            } else {
+                h = [dict intValueForKey:@"h"];
+            }
+            [self XMoveResizeWindow:win :x :y :w :h];
+        }
+        return;
+    }
+
+    id window = [dict valueForKey:@"window"];
+    if (!window) {
+        return;
+    }
+    Window win = [window unsignedLongValue];
+    id object = [dict valueForKey:@"object"];
+
+            if (value_mask & CWX) {
+                [dict setValue:nsfmt(@"%d", x) forKey:@"x"];
+            } else {
+                x = [dict intValueForKey:@"x"];
+            }
+            if (value_mask & CWY) {
+                [dict setValue:nsfmt(@"%d", y) forKey:@"y"];
+            } else {
+                y = [dict intValueForKey:@"y"];
+            }
+            if (value_mask & CWWidth) {
+                [dict setValue:nsfmt(@"%d", w) forKey:@"w"];
+            } else {
+                w = [dict intValueForKey:@"w"];
+            }
+            if (value_mask & CWHeight) {
+                [dict setValue:nsfmt(@"%d", h) forKey:@"h"];
+            } else {
+                h = [dict intValueForKey:@"h"];
+            }
+
     [self XMoveResizeWindow:win :x :y :w :h];
     id childWindowNumber = [dict valueForKey:@"childWindow"];
     if (childWindowNumber) {
@@ -2374,9 +2453,11 @@ NSLog(@"handleX11ConfigureRequest: parent %x window %x x %d y %d w %d h %d", e->
     id dict = [self dictForObjectChildWindow:e->window];
     if (dict) {
 NSLog(@"handleX11ConfigureRequest dict: %@", dict);
-NSLog(@"changes x %d y %d width %d height %d", e->x, e->y, e->width, e->height);
+NSLog(@"changes x %d y %d width %d height %d value_mask %x", e->x, e->y, e->width, e->height, e->value_mask);
         if ([self doesWindow:e->window haveProperty:"FROGNOFRAME"]) {
         } else {
+NSLog(@"resizing child window");
+[self moveResizeObjectWindow:dict x:e->x y:e->y w:e->width h:e->height value_mask:e->value_mask];
             return;
         }
     }
@@ -2419,6 +2500,11 @@ NSLog(@"handleX11MapRequest parent %x window %x", e->parent, e->window);
 
     BOOL moveWindowIfNoFrame = NO;
 
+NSLog(@"handleX11MapRequest attrs x %d y %d width %d height %d", attrs.x, attrs.y, attrs.width, attrs.height);
+{
+            id normalHints = [self XGetWMNormalHints:e->window];
+NSLog(@"WM_NORMAL_HINTS %@", normalHints);
+}
     if (attrs.x == 0) {
         if (attrs.y == 0) {
             id monitor = [Definitions x11MonitorForX:_mouseX y:_mouseY];
@@ -3858,5 +3944,23 @@ NSLog(@"object %@ name %@", object, name);
     return results;
 }
 
+- (void)hackBecauseThePeopleWhoWroteJavaAreBrainDead
+{
+    // set property _NET_WM_NAME to Sawfish
+    // apparently the people who wrote Java are completely brain-dead
+    // apparently they hard-coded the checking for specific window managers and change behavior based on this
+    // so pretend that we are Sawfish otherwise the mouse location sent for pop-ups will be wrong
+
+    Atom net_supporting_wm_check = XInternAtom(_display, "_NET_SUPPORTING_WM_CHECK", False);
+    Atom net_wm_name = XInternAtom(_display, "_NET_WM_NAME", False);
+    Atom utf8_string = XInternAtom(_display, "UTF8_STRING", False);
+    Window menuBarWindow = [_menuBar unsignedLongValueForKey:@"window"];
+    XChangeProperty(_display, _rootWindow, net_supporting_wm_check, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&menuBarWindow, 1);
+    unsigned char *name = "Sawfish";
+    XChangeProperty(_display, _rootWindow, net_wm_name, utf8_string, 8, PropModeReplace, (unsigned char *)name, strlen(name));
+
+    XChangeProperty(_display, menuBarWindow, net_supporting_wm_check, XA_WINDOW, 32, PropModeReplace, (unsigned char *)&menuBarWindow, 1);
+    XChangeProperty(_display, menuBarWindow, net_wm_name, utf8_string, 8, PropModeReplace, (unsigned char *)name, strlen(name));
+}
 @end
 

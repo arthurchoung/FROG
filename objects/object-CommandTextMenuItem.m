@@ -84,7 +84,7 @@
             if (!line) {
                 break;
             }
-NSLog(@"CommandOutputText command '%@' readLine '%@'", _command, line);
+//NSLog(@"CommandOutputText command '%@' readLine '%@'", _command, line);
             [self setValue:line forKey:@"lastLine"];
             if (_lineMessage) {
                 [line evaluateMessage:_lineMessage];

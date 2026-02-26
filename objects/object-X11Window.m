@@ -53,6 +53,8 @@
     id menuBar = [windowManager openWindowForObject:menuBarObject x:0 y:0 w:[windowManager intValueForKey:@"rootWindowWidth"] h:h];
     [windowManager setValue:menuBar forKey:@"menuBar"];
     [windowManager setFocusDict:nil];
+
+    [windowManager hackBecauseThePeopleWhoWroteJavaAreBrainDead];
 }
 @end
 
