@@ -43,9 +43,6 @@
     id _rightButtonArray;
     id _rightButtonFile;
 
-    unsigned long _appMenuWindow;
-    int _appMenuWindowX;
-    int _appMenuWindowY;
     unsigned long _menuWindowWaitForUnmapNotify;
 }
 @end
@@ -115,10 +112,6 @@
 {
     id arr = [self readMenuBarFromFile:_configPath];
     if (arr) {
-        id windowManager = [Definitions windowManager];
-        if (windowManager) {
-            arr = [windowManager incorporateFocusAppMenu:arr];
-        }
         [self setValue:arr forKey:@"array"];
     }
 }
@@ -327,14 +320,6 @@ NSLog(@"X11MenuBar handleMouseUp event %@", event);
 
 
 
-    if (_appMenuWindow) {
-        unsigned long win = _appMenuWindow;
-        _appMenuWindow = 0;
-        _appMenuWindowX = 0;
-        _appMenuWindowY = 0;
-NSLog(@"handleMouseUp %x XSendButtonReleaseEvent", win);
-        [windowManager XSendButtonReleaseEvent:win button:1];
-    }
 }
 - (void)handleRightMouseUp:(id)event
 {
@@ -382,12 +367,6 @@ NSLog(@"X11MenuBar handleRightMouseUp event %@", event);
     int menuBarHeight = [windowManager intValueForKey:@"menuBarHeight"];
     int mouseRootY = [event intValueForKey:@"mouseRootY"];
 
-    if (_appMenuWindow) {
-        int x = mouseRootX - _appMenuWindowX;
-        int y = mouseRootY - _appMenuWindowY;
-        [windowManager XSendMotionEvent:_appMenuWindow x:x y:y rootX:mouseRootX rootY:mouseRootY];
-    }
-
     if (mouseRootY < menuBarHeight) {
         id dict = [self dictForX:mouseRootX array:(_buttonDown) ? _array : _rightButtonArray];
         if (dict && (dict != _selectedDict)) {
@@ -417,63 +396,10 @@ NSLog(@"X11MenuBar handleRightMouseUp event %@", event);
     }
 
 }
-- (void)mapAppMenu:(id)dict window:(unsigned long)win x:(int)mouseRootX
-{
-    id windowManager = [Definitions windowManager];
-{
-    if (_appMenuWindow) {
-        if (win == _appMenuWindow) {
-            return;
-        }
-        [windowManager XSendButtonReleaseEvent:_appMenuWindow button:1 x:-1 y:-1 rootX:-1 rootY:-1];
-        [windowManager XUnmapWindow:_appMenuWindow];
-    }
-}
-
-    id monitor = [Definitions x11MonitorForX:mouseRootX y:0];
-    int monitorX = [monitor intValueForKey:@"x"];
-    int monitorWidth = [monitor intValueForKey:@"width"];
-    int x = [dict intValueForKey:@"x"];
-    if (x < 0) {
-        x += monitorX+monitorWidth;
-    } else {
-        x += monitorX;
-    }
-/*
-if (x+w+3 > monitorX+monitorWidth) {
-    int dictWidth = [dict intValueForKey:@"width"];
-    x = x+dictWidth-w-2;
-    if (x < monitorX) {
-        if (w > monitorWidth-3) {
-            x = monitorX;
-            w = monitorWidth-3;
-        } else {
-            x = monitorX+monitorWidth-w-3;
-        }
-    }
-}
-*/
-    [windowManager XMoveWindow:win :x :18];
-    [windowManager XMapWindow:win];
-    [windowManager XRaiseWindow:win];
-    _appMenuWindow = win;
-    _appMenuWindowX = x;
-    _appMenuWindowY = 18;
-    [windowManager XSendButtonPressEvent:win button:1];
-//    id menuDict = [windowManager openWindowForObject:obj x:x y:18*_pixelScaling w:w+3 h:h+3];
-//    [self setValue:menuDict forKey:@"menuDict"];
-//    [self setValue:dict forKey:@"selectedDict"];
-//[windowManager XSetInputFocus:[menuDict unsignedLongValueForKey:@"window"]];
-}
 - (void)openRootMenu:(id)dict x:(int)mouseRootX
 {
     id messageForClick = [dict valueForKey:@"messageForClick"];
     if (!messageForClick) {
-        id window = [dict valueForKey:@"window"];
-        if (window) {
-            [self mapAppMenu:dict window:[window unsignedLongValue] x:mouseRootX];
-            return;
-        }
         return;
     }
     id obj = [messageForClick evaluateAsMessage];
@@ -511,16 +437,6 @@ if (x+w >= monitorX+monitorWidth) {
     }
 }
 
-{
-    if (_appMenuWindow) {
-        unsigned long appMenuWindow = _appMenuWindow;
-        _appMenuWindow = 0;
-        _appMenuWindowX = 0;
-        _appMenuWindowY = 0;
-        [windowManager XSendButtonReleaseEvent:appMenuWindow button:1 x:-1 y:-1 rootX:-1 rootY:-1];
-        [windowManager XUnmapWindow:appMenuWindow];
-    }
-}
 
 
     id menuDict = [windowManager openWindowForObject:obj x:x y:18*_pixelScaling w:w h:h];
@@ -723,7 +639,6 @@ if (x+w >= monitorX+monitorWidth) {
         }
         if (highlight) {
             if (_selectedDict == elt) {
-            } else if (_appMenuWindow && (_appMenuWindow == window)) {
             } else {
                 highlight = NO;
             }

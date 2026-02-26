@@ -480,14 +480,6 @@ NSLog(@"exited windowManager runLoop");
     [_windowManager retain];
     [_windowManager setupX11];
 
-    unsigned long appMenuWindow = 0;
-    if ([object respondsToSelector:@selector(appMenuArray)]) {
-        id appMenuArray = [object appMenuArray];
-        if (appMenuArray) {
-            appMenuWindow = [_windowManager openAppMenuWindowsForArray:appMenuArray];
-        }
-    }
-
 
     id dict = nil;
     int FROGNOFRAME = [object intValueForKey:@"FROGNOFRAME"];
@@ -509,10 +501,6 @@ NSLog(@"exited windowManager runLoop");
         if (scaling >= 2) {
             [dict setValue:nsfmt(@"%d", scaling) forKey:@"pixelScaling"];
         }
-    }
-    if (dict && appMenuWindow) {
-        unsigned long win = [dict unsignedLongValueForKey:@"window"];
-        [_windowManager XChangeProperty:win name:"FROGAPPMENUHEAD" str:nsfmt(@"%lu", appMenuWindow)];
     }
     [_windowManager runLoop];
 }
@@ -541,20 +529,7 @@ NSLog(@"exited windowManager runLoop");
     [_windowManager retain];
     [_windowManager setupX11];
 
-    unsigned long appMenuWindow = 0;
-    if ([object respondsToSelector:@selector(appMenuArray)]) {
-        id appMenuArray = [object appMenuArray];
-        if (appMenuArray) {
-            appMenuWindow = [_windowManager openAppMenuWindowsForArray:appMenuArray];
-        }
-    }
-
     id dict = [_windowManager openWindowForObject:object x:x y:y w:w h:h overrideRedirect:NO propertyName:propertyName];
-
-    if (dict && appMenuWindow) {
-        unsigned long win = [dict unsignedLongValueForKey:@"window"];
-        [_windowManager XChangeProperty:win name:"FROGAPPMENUHEAD" str:nsfmt(@"%lu", appMenuWindow)];
-    }
         
     [_windowManager runLoop];
 }
@@ -613,7 +588,6 @@ NSLog(@"exited windowManager runLoop");
 
     Window _focusInEventWindow;
 
-    id _focusAppMenu;
 }
 @end
 @implementation WindowManager
@@ -1357,56 +1331,6 @@ NSLog(@"openButtonDownMenu obj %@ w %d h %d", obj, w, h);
 
     return win;
 }
-- (unsigned long)openUnmappedWindowWithName:(id)name x:(int)x y:(int)y w:(int)w h:(int)h overrideRedirect:(BOOL)overrideRedirect propertyName:(char *)propertyName
-{
-    XSetWindowAttributes setAttrs;
-    setAttrs.colormap = _colormap;
-    if (_isWindowManager) {
-        setAttrs.event_mask = SubstructureRedirectMask|SubstructureNotifyMask|ButtonPressMask|ButtonReleaseMask|PointerMotionMask|VisibilityChangeMask|KeyPressMask|KeyReleaseMask|StructureNotifyMask|FocusChangeMask|EnterWindowMask|LeaveWindowMask;
-    } else {
-        setAttrs.event_mask = ButtonPressMask|ButtonReleaseMask|PointerMotionMask|VisibilityChangeMask|KeyPressMask|KeyReleaseMask|StructureNotifyMask|FocusChangeMask;
-    }
-    setAttrs.bit_gravity = NorthWestGravity;
-    setAttrs.background_pixmap = None;
-    setAttrs.border_pixel = 0;
-    unsigned long attrFlags = CWColormap|CWEventMask|CWBackPixmap|CWBorderPixel;
-    if (!_isWindowManager) {
-        if (overrideRedirect) {
-            setAttrs.override_redirect = True;
-            attrFlags |= CWOverrideRedirect;
-        }
-    }
-    Window win = XCreateWindow(_display, _rootWindow, x, y, w, h, 0, _visualInfo.depth, InputOutput, _visualInfo.visual, attrFlags, &setAttrs);
-
-
-    if (!_isWindowManager) {
-        if (name) {
-            [self XStoreName:win :name];
-        }
-
-        Atom wm_delete_window = XInternAtom(_display, "WM_DELETE_WINDOW", 0);
-        XSetWMProtocols(_display, win, &wm_delete_window, 1);
-
-        if (propertyName) {
-            [self XChangeProperty:win name:propertyName value:NULL];
-        }
-
-        if (!_openGLTexture) {
-            if ([Definitions respondsToSelector:@selector(setupOpenGLForDisplay:window:visualInfo:)]) {
-                if ([Definitions setupOpenGLForDisplay:_display window:win visualInfo:&_visualInfo]) {
-                    id texture = [@"GLTexture" asInstance];
-        NSLog(@"x11 ALLOCATED textureID %d", [texture textureID]);
-                    [self setValue:texture forKey:@"openGLTexture"];
-                    id objectTexture = [@"GLTexture" asInstance];
-                    [self setValue:objectTexture forKey:@"openGLObjectTexture"];
-                    _openGLWindow = win;
-                }
-            }
-        }
-    }
-
-    return win;
-}
 
 - (id)openWindowForObject:(id)object x:(int)x y:(int)y w:(int)w h:(int)h 
 {
@@ -1444,25 +1368,6 @@ if ([monitor intValueForKey:@"height"] == 768) {
     [_objectWindows addObject:dict];
 
     [self addShadowMaskToObjectWindow:dict];
-
-    return dict;
-}
-- (id)openUnmappedWindowForObject:(id)object x:(int)x y:(int)y w:(int)w h:(int)h overrideRedirect:(BOOL)overrideRedirect propertyName:(char *)propertyName
-{
-    if (!object) {
-        return nil;
-    }
-
-    Window win = [self openUnmappedWindowWithName:[@"." asRealPath] x:x y:y w:w h:h overrideRedirect:overrideRedirect propertyName:propertyName];
-
-    id dict = nsdict();
-    [dict setValue:nsfmt(@"%lu", win) forKey:@"window"];
-    [dict setValue:object forKey:@"object"];
-    [dict setValue:nsfmt(@"%d", x) forKey:@"x"];
-    [dict setValue:nsfmt(@"%d", y) forKey:@"y"];
-    [dict setValue:nsfmt(@"%d", w) forKey:@"w"];
-    [dict setValue:nsfmt(@"%d", h) forKey:@"h"];
-    [_objectWindows addObject:dict];
 
     return dict;
 }
@@ -1658,25 +1563,6 @@ nanosleep(&ts, 0);
 - (void)setFocusDict:(id)dict raiseWindow:(BOOL)raiseWindow setInputFocus:(BOOL)setInputFocus
 {
 NSLog(@"setFocusDict:%@", dict);
-    {
-        id arr = nil;
-        if (!dict || (dict == _menuBar)) {
-        } else if ([dict intValueForKey:@"FROGNOFRAME"]) {
-            id childWindow = [dict valueForKey:@"childWindow"];
-            arr = [self getAppMenuForWindow:[childWindow unsignedLongValue]];
-        } else {
-            id childWindow = [dict valueForKey:@"childWindow"];
-            arr = [self getAppMenuForWindow:[childWindow unsignedLongValue]];
-        }
-
-        [self setValue:arr forKey:@"focusAppMenu"];
-        id menuBar = [_menuBar valueForKey:@"object"];
-        id oldArray = [menuBar valueForKey:@"array"];
-        if (oldArray) {
-            id newArray = [self incorporateFocusAppMenu:oldArray];
-            [menuBar setValue:newArray forKey:@"array"];
-        }
-    }
     if (!dict) {
         dict = _menuBar;
     }
@@ -3825,124 +3711,6 @@ NSLog(@"property %s prop_return '%s'", propertyName, prop_return);
 @end
 
 @implementation WindowManager(jfkdslfjklsdjfksdjkfjksdljfkls)
-- (unsigned long)openAppMenuWindowsForArray:(id)array
-{
-    unsigned long prev = 0;
-    for (int i=[array count]-1; i>=0; i--) {
-        id elt = [array nth:i];
-        id title = [elt valueForKey:@"title"];
-        if (!title) {
-            title = @"X11Menu";
-        }
-        id dict = [self openAppMenuWindowForObject:elt name:title];
-        if (dict) {
-            unsigned long win = [dict unsignedLongValueForKey:@"window"];
-            [self XChangeProperty:win name:"FROGAPPMENUNEXT" str:nsfmt(@"%lu", prev)];
-            prev = win;
-        }
-    }
-    return prev;
-}
-- (id)openAppMenuWindowForObject:(id)object name:(id)name
-{
-    int x = 0;
-    int y = 0;
-    int w = [object preferredWidth];
-    int h = [object preferredHeight];
-NSLog(@"object %@ name %@", object, name);
-    XSetWindowAttributes setAttrs;
-    setAttrs.colormap = _colormap;
-    setAttrs.event_mask = ButtonPressMask|ButtonReleaseMask|PointerMotionMask|VisibilityChangeMask|KeyPressMask|KeyReleaseMask|StructureNotifyMask|FocusChangeMask;
-    setAttrs.bit_gravity = NorthWestGravity;
-    setAttrs.background_pixmap = None;
-    setAttrs.border_pixel = 0;
-    unsigned long attrFlags = CWColormap|CWEventMask|CWBackPixmap|CWBorderPixel;
-    if (1 /*overrideRedirect*/) {
-        setAttrs.override_redirect = True;
-        attrFlags |= CWOverrideRedirect;
-    }
-    Window win = XCreateWindow(_display, _rootWindow, x, y, w, h, 0, _visualInfo.depth, InputOutput, _visualInfo.visual, attrFlags, &setAttrs);
-
-
-    if (name) {
-        [self XStoreName:win :name];
-    }
-
-    Atom wm_delete_window = XInternAtom(_display, "WM_DELETE_WINDOW", 0);
-    XSetWMProtocols(_display, win, &wm_delete_window, 1);
-
-//    XMapWindow(_display, win);
-
-    id dict = nsdict();
-    [dict setValue:nsfmt(@"%lu", win) forKey:@"window"];
-    [dict setValue:object forKey:@"object"];
-    [dict setValue:nsfmt(@"%d", x) forKey:@"x"];
-    [dict setValue:nsfmt(@"%d", y) forKey:@"y"];
-    [dict setValue:nsfmt(@"%d", w) forKey:@"w"];
-    [dict setValue:nsfmt(@"%d", h) forKey:@"h"];
-    [dict setValue:@"1" forKey:@"needsRedraw"];
-    [_objectWindows addObject:dict];
-    [self addShadowMaskToObjectWindow:dict];
-
-    return dict;
-}
-- (id)getAppMenuForWindow:(unsigned long)win
-{
-    if (!win) {
-        return nil;
-    }
-
-    id keys = nsdict();
-    id arr = nsarr();
-    id value = [self XGetWindowProperty:win name:"FROGAPPMENUHEAD"];
-    for(;;) {
-        if (!value) {
-            break;
-        }
-        if ([keys valueForKey:value]) {
-            break;
-        }
-        [keys setValue:value forKey:value];
-        unsigned long win = [value unsignedLongValue];
-        if (!win) {
-            break;
-        }
-        id name = [self XFetchName:win];
-        if (!name) {
-            break;
-        }
-        id object = [Definitions TextMenuItem:name];
-        id dict = nsdict();
-        [dict setValue:@"4" forKey:@"leftPadding"];
-        [dict setValue:@"4" forKey:@"rightPadding"];
-        [dict setValue:object forKey:@"object"];
-        [dict setValue:value forKey:@"window"];
-        [arr addObject:dict];
-        value = [self XGetWindowProperty:win name:"FROGAPPMENUNEXT"];
-    }
-    if ([arr count]) {
-        return arr;
-    }
-    return nil;
-}
-- (id)incorporateFocusAppMenu:(id)menuBarArray
-{
-    id results = nsarr();
-    for (int i=0; i<[menuBarArray count]; i++) {
-        id elt = [menuBarArray nth:i];
-        id window = [elt valueForKey:@"window"];
-        if (!window) {
-            int flexible = [elt intValueForKey:@"flexible"];
-            if (flexible) {
-                if (_focusAppMenu) {
-                    [results addObjectsFromArray:_focusAppMenu];
-                }
-            }
-            [results addObject:elt];
-        }
-    }
-    return results;
-}
 
 - (void)hackBecauseThePeopleWhoWroteJavaAreBrainDead
 {
