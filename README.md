@@ -73,7 +73,7 @@ $ ./frog
 Some of the Perl scripts use the JSON module.
 
 
-## Screenshot
+## Screenshots
 
 The boot menu.
 
