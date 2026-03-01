@@ -37,12 +37,12 @@ foreach $arg (@ARGV) {
 #}
 
 # random placement
-if ($w && $h && ($monitorWidth > $w) && ($monitorHeight - 20 > $h)) {
+if ($w && $h && ($monitorWidth > $w) && ($monitorHeight - 43 > $h)) {
     $rangeX = $monitorWidth - $w;
-    $rangeY = $monitorHeight - 20 - $h;
+    $rangeY = $monitorHeight - 43 - $h;
 
     $x = $monitorX + int(rand($rangeX));
-    $y = 20 + int(rand($rangeY));
+    $y = 43 + int(rand($rangeY));
     print "x:$x y:$y\n";
     exit 0;
 }
