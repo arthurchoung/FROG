@@ -1153,37 +1153,43 @@ NSLog(@"unparent object %@", dict);
     }
     Window win = [window unsignedLongValue];
     id object = [dict valueForKey:@"object"];
+        int leftBorder = [object intValueForKey:@"leftBorder"];
+        int rightBorder = [object intValueForKey:@"rightBorder"];
+        int topBorder = [object intValueForKey:@"topBorder"];
+        int bottomBorder = [object intValueForKey:@"bottomBorder"];
+
+//        XWindowAttributes attrs;
+//        XGetWindowAttributes(_display, win, &attrs);
 
             if (value_mask & CWX) {
+                x -= leftBorder;
                 [dict setValue:nsfmt(@"%d", x) forKey:@"x"];
             } else {
                 x = [dict intValueForKey:@"x"];
             }
             if (value_mask & CWY) {
+                y -= topBorder;
                 [dict setValue:nsfmt(@"%d", y) forKey:@"y"];
             } else {
                 y = [dict intValueForKey:@"y"];
             }
             if (value_mask & CWWidth) {
+                w += leftBorder+rightBorder;
                 [dict setValue:nsfmt(@"%d", w) forKey:@"w"];
             } else {
                 w = [dict intValueForKey:@"w"];
             }
             if (value_mask & CWHeight) {
+                h += topBorder+bottomBorder;
                 [dict setValue:nsfmt(@"%d", h) forKey:@"h"];
             } else {
                 h = [dict intValueForKey:@"h"];
             }
 
-    [self XMoveResizeWindow:win :x :y :w :h];
+//    [self XMoveResizeWindow:win :x :y :w :h];
     id childWindowNumber = [dict valueForKey:@"childWindow"];
     if (childWindowNumber) {
         unsigned long childWindow = [childWindowNumber unsignedLongValue];
-        id object = [dict valueForKey:@"object"];
-        int leftBorder = [object intValueForKey:@"leftBorder"];
-        int rightBorder = [object intValueForKey:@"rightBorder"];
-        int topBorder = [object intValueForKey:@"topBorder"];
-        int bottomBorder = [object intValueForKey:@"bottomBorder"];
         int childW = [dict intValueForKey:@"w"]-leftBorder-rightBorder;
         int childH = [dict intValueForKey:@"h"]-topBorder-bottomBorder;
         if (childW < 1) {
@@ -1862,6 +1868,12 @@ NSLog(@"received X event type %d", event.type);
                 [dict setValue:nil forKey:@"moveWindow"];
                 [dict setValue:nil forKey:@"resizeWindow"];
             }
+
+
+
+
+
+
             for (int i=0; i<[_objectWindows count]; i++) {
                 id dict = [_objectWindows nth:i];
                 id moveChildWindow = [dict valueForKey:@"moveChildWindow"];
@@ -2283,10 +2295,12 @@ NSLog(@"WM_NORMAL_HINTS %@", normalHints);
             // Move the window back and forth to trigger a redraw when WM_NORMAL_HINTS changes
             // Seems to fix the no-redrawing problem with x64sc (VICE) which uses GTK3
             // But there should be a better way
+/*
             XWindowAttributes attrs;
             XGetWindowAttributes(_display, e->window, &attrs);
             [self XMoveWindow:e->window :attrs.x :attrs.y+1];
             [self XMoveWindow:e->window :attrs.x :attrs.y];
+*/
         }
         XFree(atom);
     }
@@ -2343,7 +2357,40 @@ NSLog(@"changes x %d y %d width %d height %d value_mask %x", e->x, e->y, e->widt
         if ([self doesWindow:e->window haveProperty:"FROGNOFRAME"]) {
         } else {
 NSLog(@"resizing child window");
-[self moveResizeObjectWindow:dict x:e->x y:e->y w:e->width h:e->height value_mask:e->value_mask];
+    id object = [dict valueForKey:@"object"];
+
+    unsigned long win = [dict unsignedLongValueForKey:@"window"];
+
+        int leftBorder = [object intValueForKey:@"leftBorder"];
+        int rightBorder = [object intValueForKey:@"rightBorder"];
+        int topBorder = [object intValueForKey:@"topBorder"];
+        int bottomBorder = [object intValueForKey:@"bottomBorder"];
+        int w = [dict intValueForKey:@"w"];
+        int h = [dict intValueForKey:@"h"];
+
+        if (e->value_mask & CWWidth) {
+            w = e->width + leftBorder + rightBorder;
+        }
+        if (e->value_mask & CWHeight) {
+            h = e->height + topBorder + bottomBorder;
+        }
+NSLog(@"resizing child window: win %lu w %d h %d", win, w, h);
+    XResizeWindow(_display, win, w, h);
+    [dict setValue:nsfmt(@"%d", w) forKey:@"w"];
+    [dict setValue:nsfmt(@"%d", h) forKey:@"h"];
+    [dict setValue:@"1" forKey:@"needsRedraw"];
+
+    XWindowChanges changes;
+    changes.x = leftBorder;
+    changes.y = topBorder;
+    changes.width = e->width;
+    changes.height = e->height;
+    changes.border_width = e->border_width;
+    changes.sibling = e->above;
+    changes.stack_mode = e->detail;
+    XConfigureWindow(_display, e->window, e->value_mask, &changes);
+
+
             return;
         }
     }
