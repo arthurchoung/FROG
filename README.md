@@ -75,6 +75,16 @@ Some of the Perl scripts use the JSON module.
 
 ## Screenshot
 
+The boot menu.
+
+![FROG Boot Menu](Screenshots/frog-bootmenu.png)
+
+The number of characters at the top of the screen is equal to the number of CPU cores in the computer.
+
+![FROG Kernel Boot](Screenshots/frog-kernelboot.png)
+
+The desktop.
+
 ![FROG Screenshot](Screenshots/frog-screenshot.png)
 
 
