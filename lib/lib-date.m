@@ -4,7 +4,7 @@
 
  Copyright (c) 2026 Arthur Choung. All rights reserved.
 
- Email: arthur -at- 8bitoperahouse.com
+ Email: arthur -at- turbocd.com
 
  This file is part of FROG.
 

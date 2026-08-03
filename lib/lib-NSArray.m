@@ -4,7 +4,7 @@
 
  Copyright (c) 2026 Arthur Choung. All rights reserved.
 
- Email: arthur -at- 8bitoperahouse.com
+ Email: arthur -at- turbocd.com
 
  This file is part of FROG.
 
@@ -36,6 +36,18 @@
 
 
 @implementation NSArray(sdsadff)
+- (id)allValuesForKey:(id)key
+{
+    id results = nsarr();
+    for (int i=0; i<[self count]; i++) {
+        id elt = [self nth:i];
+        id val = [elt valueForKey:key];
+        if (val) {
+            [results addObject:val];
+        }
+    }
+    return results;
+}
 - (void)addToArray:(id)arr
 {
     [arr addObjectsFromArray:self];

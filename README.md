@@ -24,7 +24,7 @@ It comes with the 64-bit gcc only, so the included gcc cannot create 32 bit bina
 
 It is a stripped down system that does not include systemd, elogind, polkit, pulseaudio, or NetworkManager.
 
-http://8bitoperahouse.com/download/
+http://turbocd.com/download/
 
 
 ## FROG USB stick
@@ -103,7 +103,7 @@ FROG does not use Automatic Reference Counting. It causes problems with type-che
 
 Copyright (c) 2026 Arthur Choung. All rights reserved.
 
-Email: arthur -at- 8bitoperahouse.com
+Email: arthur -at- turbocd.com
 
 Released under the GNU General Public License, version 3.
 

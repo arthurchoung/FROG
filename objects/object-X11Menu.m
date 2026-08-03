@@ -4,7 +4,7 @@
 
  Copyright (c) 2026 Arthur Choung. All rights reserved.
 
- Email: arthur -at- 8bitoperahouse.com
+ Email: arthur -at- turbocd.com
 
  This file is part of FROG.
 
@@ -77,6 +77,14 @@
 }
 @end
 
+
+@implementation Definitions(jfelwmfkldsmfklmdsklfjiew)
++ (void)drawMenuHorizontalStripesInBitmap:(id)bitmap rect:(Int4)r
+{
+    [Definitions drawHorizontalStripesInBitmap:bitmap rect:r colors:@"#e5e7ea" :@"#e9ebee"];
+}
+@end
+
 @interface X11Menu : IvarObject
 {
     int _closingIteration;
@@ -101,10 +109,9 @@
 
 - (void)dealloc
 {
-NSLog(@"dealloc X11Menu %@", self);
+NSLog(@"dealloc Menu %@", self);
     [super dealloc];
 }
-
 - (id)init
 {
     self = [super init];
@@ -125,18 +132,7 @@ NSLog(@"dealloc X11Menu %@", self);
     }
     return self;
 }
-- (int *)x11WindowMaskPointsForWidth:(int)w height:(int)h
-{
-    static int points[5];
-    points[0] = 5; // length of array including this number
 
-    points[1] = 0; // lower left corner
-    points[2] = h-1;
-
-    points[3] = w-1; // upper right corner
-    points[4] = 0;
-    return points;
-}
 - (void)useFixedWidthFont
 {
     id obj = [Definitions scaleFont:_pixelScaling
@@ -190,25 +186,24 @@ NSLog(@"dealloc X11Menu %@", self);
         }
     }
     if (highestWidth && highestRightWidth) {
-        return highestWidth + 8*_pixelScaling + 12*_pixelScaling + highestRightWidth + 26*_pixelScaling;
+        return highestWidth + 30*_pixelScaling + highestRightWidth + 26*_pixelScaling;
     }
     if (highestWidth) {
-        return highestWidth + 8*_pixelScaling + 12*_pixelScaling;
+        return highestWidth + 30*_pixelScaling;
     }
     return 1;
 }
 - (int)preferredHeight
 {
-    int h = [_array count]*18*_pixelScaling;
+    int h = [_array count]*20*_pixelScaling;
     if (h) {
-        return h+3;
+        return h;
     }
-    return 1+3;
+    return 1;
 }
 
 - (BOOL)shouldAnimate
 {
-NSLog(@"X11Menu shouldAnimate %d", _closingIteration);
     if (_closingIteration > 0) {
         return YES;
     }
@@ -217,13 +212,13 @@ NSLog(@"X11Menu shouldAnimate %d", _closingIteration);
 
 - (void)beginIteration:(id)event rect:(Int4)r
 {
-NSLog(@"X11Menu beginIteration %d", _closingIteration);
+NSLog(@"AquaMenu beginIteration %d", _closingIteration);
     if (_closingIteration < 1) {
         return;
     }
     _closingIteration--;
     id x11dict = [event valueForKey:@"x11dict"];
-    if (_closingIteration == 1) {
+    if (_closingIteration < 2) {
 //        _closingIteration = 0;
         id message = [_selectedObject valueForKey:@"messageForClick"];
         if (message) {
@@ -233,13 +228,13 @@ NSLog(@"X11Menu beginIteration %d", _closingIteration);
             }
             [context evaluateMessage:message];
             if (_contextualWindow) {
-                id windowManager = [@"windowManager" valueForKey];
+                id windowManager = [Definitions windowManager];
                 id contextualDict = [windowManager dictForObjectWindow:_contextualWindow];
                 [contextualDict setValue:@"1" forKey:@"needsRedraw"];
             }
         }
         if (_unmapInsteadOfClose) {
-            id windowManager = [@"windowManager" valueForKey];
+            id windowManager = [Definitions windowManager];
             id window = [x11dict valueForKey:@"window"];
             if (window) {
                 [windowManager XUnmapWindow:[window unsignedLongValue]];
@@ -250,7 +245,7 @@ NSLog(@"X11Menu beginIteration %d", _closingIteration);
     }
 }
 
-- (void)drawInBitmap:(id)bitmap rect:(Int4)r
+- (void)drawInBitmap:(id)bitmap rect:(Int4)outerRect
 {
     id windowManager = [Definitions windowManager];
     int isWindowManager = [windowManager intValueForKey:@"isWindowManager"];
@@ -262,26 +257,19 @@ NSLog(@"X11Menu beginIteration %d", _closingIteration);
                     :[[_scaledFont nth:3] bytes]];
     }
 
-    Int4 origRect = r;
-    [bitmap setColorIntR:0xff g:0xff b:0xff a:0xff];
-    [bitmap fillRect:r];
-    r.y -= _scrollY;
 //FIXME pixelScaling
-    [bitmap setColorIntR:0x86 g:0x8a b:0x8e a:0xff];
-    [bitmap drawHorizontalLineAtX:r.x x:r.x+r.w-1 y:r.y+r.h-1];
-    [bitmap drawVerticalLineAtX:r.x+r.w-1 y:r.y y:r.y+r.h-1];
-    [bitmap setColorIntR:0x00 g:0x00 b:0x00 a:0xff];
-    [bitmap drawHorizontalLineAtX:r.x x:r.x+r.w-2 y:r.y];
-    [bitmap drawHorizontalLineAtX:r.x x:r.x+r.w-2 y:r.y+r.h-2];
-    [bitmap drawVerticalLineAtX:r.x y:r.y y:r.y+r.h-2];
-    [bitmap drawVerticalLineAtX:r.x+r.w-2 y:r.y y:r.y+r.h-2];
-
+    Int4 origRect = outerRect;
+outerRect.y -= _scrollY;
+    Int4 r = outerRect;
     r.x += 1;
     r.y += 1;
-    r.w -= 3;
-    r.h -= 3;
-
-
+    r.w -= 2;
+    r.h -= 2;
+    [bitmap setColor:@"#cacaca"];
+    [bitmap fillRect:outerRect];
+//    [bitmap setColor:@"green"];
+//    [bitmap fillRect:r];
+    [Definitions drawMenuHorizontalStripesInBitmap:bitmap rect:origRect];
 
     [self setValue:nil forKey:@"selectedObject"];
     id arr = _array;
@@ -289,7 +277,7 @@ NSLog(@"X11Menu beginIteration %d", _closingIteration);
     if (!numberOfCells) {
         return;
     }
-    int cellHeight = 18*_pixelScaling;
+    int cellHeight = r.h / numberOfCells;
     for (int i=0; i<numberOfCells; i++) {
         Int4 cellRect = [Definitions rectWithX:r.x y:r.y+i*cellHeight w:r.w h:cellHeight];
         id elt = [arr nth:i];
@@ -313,6 +301,9 @@ NSLog(@"X11Menu beginIteration %d", _closingIteration);
         if ([messageForClick length] && [Definitions isX:_mouseX y:_mouseY insideRect:origRect] && [Definitions isX:_mouseX y:_mouseY insideRect:cellRect]) {
             if ([text length]) {
                 if (_closingIteration > 0) {
+//                    if ((_closingIteration/15) % 2 == 1) {
+//                        [Definitions drawHorizontalStripesInBitmap:bitmap rect:cellRect colors:@"#3165b5" :@"#3063b0"];
+//                    }
                     if (isWindowManager) {
                         if ((_closingIteration/15) % 2 == 0) {
                             [bitmap setColor:@"blue"];
@@ -331,45 +322,44 @@ NSLog(@"X11Menu beginIteration %d", _closingIteration);
                         }
                     }
                 } else {
-                    [bitmap setColor:@"blue"];
-                    [bitmap fillRect:cellRect];
-                    [bitmap setColorIntR:255 g:255 b:255 a:255];
+                    [Definitions drawHorizontalStripesInBitmap:bitmap rect:cellRect colors:@"#3165b5" :@"#3063b0"];
                 }
-                [bitmap drawBitmapText:text x:cellRect.x+(4+12)*_pixelScaling y:cellRect.y+2*_pixelScaling];
+                [bitmap setColorIntR:255 g:255 b:255 a:255];
+                [bitmap drawBitmapText:text x:cellRect.x+20*_pixelScaling y:cellRect.y+4*_pixelScaling];
                 if ([rightText length]) {
                     int w = [bitmap bitmapWidthForText:rightText];
-                    [bitmap drawBitmapText:rightText x:cellRect.x+cellRect.w-w-(4+6)*_pixelScaling y:cellRect.y+2*_pixelScaling];
+                    [bitmap drawBitmapText:rightText x:cellRect.x+cellRect.w-w-10*_pixelScaling y:cellRect.y+4*_pixelScaling];
                 }
             } else {
-                [bitmap setColor:@"black"];
-                [bitmap drawHorizontalDashedLineAtX:cellRect.x x:cellRect.x+cellRect.w y:cellRect.y+cellRect.h/2 dashLength:1];
+                [bitmap setColor:@"#8c8c8c"];
+                [bitmap drawHorizontalLineAtX:cellRect.x x:cellRect.x+cellRect.w y:cellRect.y+cellRect.h/2];
             }
             [self setValue:elt forKey:@"selectedObject"];
         } else {
             if ([text length]) {
                 if ([messageForClick length]) {
                     [bitmap setColor:@"black"];
-                    [bitmap drawBitmapText:text x:cellRect.x+(4+12)*_pixelScaling y:cellRect.y+2*_pixelScaling];
+                    [bitmap drawBitmapText:text x:cellRect.x+20*_pixelScaling y:cellRect.y+4*_pixelScaling];
                     if ([rightText length]) {
                         int w = [bitmap bitmapWidthForText:rightText];
-                        [bitmap drawBitmapText:rightText x:cellRect.x+cellRect.w-w-(4+6)*_pixelScaling y:cellRect.y+2*_pixelScaling];
+                        [bitmap drawBitmapText:rightText x:cellRect.x+cellRect.w-w-10*_pixelScaling y:cellRect.y+4*_pixelScaling];
                     }
                 } else {
                     [bitmap setColor:@"black"];
                     [bitmap fillRect:cellRect];
                     [bitmap setColorIntR:255 g:255 b:255 a:255];
-                    [bitmap drawBitmapText:text x:cellRect.x+(4+12)*_pixelScaling y:cellRect.y+2*_pixelScaling];
+                    [bitmap drawBitmapText:text x:cellRect.x+20*_pixelScaling y:cellRect.y+4*_pixelScaling];
                 }
             } else {
-                [bitmap setColor:@"black"];
-                [bitmap drawHorizontalDashedLineAtX:cellRect.x x:cellRect.x+cellRect.w y:cellRect.y+cellRect.h/2 dashLength:1];
+                [bitmap setColor:@"#8c8c8c"];
+                [bitmap drawHorizontalLineAtX:cellRect.x x:cellRect.x+cellRect.w y:cellRect.y+cellRect.h/2];
             }
         }
     }
 }
 - (void)handleKeyDown:(id)event
 {
-NSLog(@"X11Menu handleKeyDown");
+NSLog(@"AquaMenu handleKeyDown");
     if (_closingIteration > 0) {
         return;
     }
@@ -383,7 +373,7 @@ NSLog(@"keyString %@", keyString);
 }
 - (void)handleScrollWheel:(id)event
 {
-NSLog(@"X11Menu handleScrollWheel");
+NSLog(@"AquaMenu handleScrollWheel");
     if (_closingIteration > 0) {
         return;
     }
@@ -391,9 +381,10 @@ NSLog(@"X11Menu handleScrollWheel");
 NSLog(@"dy %d", dy);
     _scrollY += dy;
 }
+
 - (void)handleMouseMoved:(id)event
 {
-//NSLog(@"X11Menu handleMouseMoved");
+//NSLog(@"AquaMenu handleMouseMoved");
     if (_closingIteration > 0) {
         return;
     }
@@ -403,19 +394,15 @@ NSLog(@"dy %d", dy);
 
 - (void)handleMouseUp:(id)event context:(id)x11dict
 {
-NSLog(@"X11Menu handleMouseUp");
+NSLog(@"AquaMenu handleMouseUp");
     if (_closingIteration > 0) {
-NSLog(@"check1");
         return;
     }
-NSLog(@"check2");
     int mouseRootY = [event intValueForKey:@"mouseRootY"];
     if (mouseRootY == -1) {
         [self setValue:nil forKey:@"selectedObject"];
-NSLog(@"check3");
     }
     if (_selectedObject) {
-NSLog(@"check4");
         id windowManager = [Definitions windowManager];
         if ([windowManager intValueForKey:@"isWindowManager"]) {
             _closingIteration = 120;
@@ -423,16 +410,13 @@ NSLog(@"check4");
             _closingIteration = 10;
         }
     } else {
-NSLog(@"check5");
         if (_unmapInsteadOfClose) {
-NSLog(@"check6");
-            id windowManager = [@"windowManager" valueForKey];
+            id windowManager = [Definitions windowManager];
             id window = [x11dict valueForKey:@"window"];
             if (window) {
                 [windowManager XUnmapWindow:[window unsignedLongValue]];
             }
         } else { 
-NSLog(@"check7 %@", x11dict);
             [x11dict setValue:@"1" forKey:@"shouldCloseWindow"];
         }
     }

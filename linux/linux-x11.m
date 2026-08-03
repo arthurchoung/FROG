@@ -4,7 +4,7 @@
 
  Copyright (c) 2026 Arthur Choung. All rights reserved.
 
- Email: arthur -at- 8bitoperahouse.com
+ Email: arthur -at- turbocd.com
 
  This file is part of FROG.
 
@@ -434,7 +434,7 @@ NSLog(@"signal_handler %d", num);
 @implementation Definitions(fjkldsjlkfjdsf)
 + (void)runWindowManager
 {
-    [Definitions runWindowManager:@"enterWin30Mode"];
+    [Definitions runWindowManager:@"enterAquaMode"];
 }
 + (void)runWindowManager:(id)message
 {

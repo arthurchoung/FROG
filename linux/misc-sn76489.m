@@ -104,5 +104,38 @@ static int16_t audiobuf[FRAMECOUNT];
 
     exit(0);
 }
++ (void)runSN76489capture
+{
+    int divider = 1;
+
+    id process = [[@"aplay -f S16_LE -r 44100" split] runCommandAndReturnProcess];
+
+    SNG *sng = SNG_new(3579545, SAMPLERATE);
+    if (!sng) {
+        NSLog(@"unable to allocate SNG");
+        exit(1);
+    }
+    SNG_reset(sng);
+
+    char buf[4096];
+    for (;;) {
+        if (!fgets(buf, 4096, stdin)) {
+            break;
+        }
+
+        if (!strncmp(buf, "sn76489 val:", 12)) {
+            int val = (int)strtol(buf+12, 0, 10);
+            SNG_writeIO(sng, val);
+        } else if (!strncmp(buf, "sn76489 endframe", 16)) {
+            for (int i=0; i<FRAMECOUNT/divider; i++) {
+                audiobuf[i] = SNG_calc(sng);
+            }
+//        fwrite(audiobuf, 2, FRAMECOUNT, stdout);
+            [process writeBytes:audiobuf length:(FRAMECOUNT/divider)*2];
+        }
+    }
+
+    exit(0);
+}
 @end
 
