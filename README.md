@@ -7,7 +7,7 @@ FROG -- FROG Runs On GNU/Linux
   * Bitmapped graphics, low DPI displays
   * Running on Linux and X11
   * Frog from Chrono Trigger
-  * For now, classic Mac style widgets (i.e. buttons), but in the future it will be themed like Chrono Trigger
+  * Hopefully one day it will be like Mac OS X Leopard 10.5
 
 
 ## Download
@@ -44,7 +44,7 @@ Run as root. Be careful not to write to the wrong drive.
 
 The goal is to have an OS that is stable and not constantly changing from year to year for no apparent reason.
 
-FROG combines elements of Windows 3.0a and Chrono Trigger, to create a minimal desktop environment for Linux.
+FROG combines elements of Mac OS X Leopard 10.5 and Chrono Trigger, to create a minimal desktop environment for Linux.
 
 
 ## How to compile and run
@@ -83,7 +83,7 @@ The number of characters at the top of the screen is equal to the number of CPU 
 
 ![FROG Kernel Boot](Screenshots/frog-kernelboot.png)
 
-The desktop.
+The desktop. (Note: screenshot needs to be updated)
 
 ![FROG Screenshot](Screenshots/frog-screenshot.png)
 
