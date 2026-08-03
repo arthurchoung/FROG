@@ -2,7 +2,7 @@
 
 FROG -- FROG Runs On GNU/Linux
 
-  * Windows 3.0a style window frames
+  * Mac OS X Aqua style window frames
   * Custom lightweight Objective-C foundation
   * Bitmapped graphics, low DPI displays
   * Running on Linux and X11
